@@ -2,7 +2,8 @@ import { FlatList, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react';
 import styles from '../Home/style';
 import firebase from '../../config/firebase';
-import { getFirestore, collection, orderBy, query, onSnapshot, doc, deleteDoc } from 'firebase/firestore'
+import { getAuth } from "firebase/auth";
+import { getFirestore, collection, orderBy, query, onSnapshot, doc, deleteDoc, where } from 'firebase/firestore'
 const db = getFirestore(firebase)
 import { MaterialIcons } from '@expo/vector-icons'
 
@@ -19,16 +20,25 @@ export default function Home({ navigation }) {
     }
 
     useEffect(() => {
-        const q = query(collection(db, "activities"), orderBy("data_registro", "asc"));
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        const q = query(
+            collection(db, "activities"),
+            where("userId", "==", user.uid), // Filtrar as atividades pelo ID do usuário
+            orderBy("data_registro", "asc")
+        );
+
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const activities = [];
             querySnapshot.forEach((doc) => {
                 activities.push({ ...doc.data(), id: doc.id });
-                // console.log(doc.data())
             });
-            setActivitie(activities)
+            setActivitie(activities);
         });
-    }, [])
+
+        return () => unsubscribe(); // Cancelar a inscrição do snapshot no momento certo
+    }, []);
 
     const completedActivitie = (id) => {
         // Verifique se a atividade já está marcada como concluída
@@ -45,7 +55,7 @@ export default function Home({ navigation }) {
 
     return (
         <View style={styles.container}>
-            
+
             <View style={styles.conclusionActivitie}>
                 <Text style={styles.titleMessage}>Tarefas:</Text>
                 {completedActivities.length >= 0 && (

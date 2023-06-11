@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native'
 import styles from './style'
 import firebase from '../../config/firebase'
-import { getFirestore } from 'firebase/firestore'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+
 const db = getFirestore(firebase)
 
 export default function CreateActivitie({navigation}){
@@ -22,11 +23,15 @@ export default function CreateActivitie({navigation}){
     }
 
     const createActivitie = () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        
         const newActivitie = addDoc(collection(db, 'activities'), {
             tarefa: descricao,
             prazo: prazo,
             categoria: categoria,
-            data_registro: serverTimestamp()
+            data_registro: serverTimestamp(),
+            userId: user.uid // Associar o ID do usuário à atividade
         });
 
         navigation.navigate('Tabs')
